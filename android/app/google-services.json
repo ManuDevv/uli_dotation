@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "196498039196",
+    "project_id": "uli-dotation",
+    "storage_bucket": "uli-dotation.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:196498039196:android:eef6a53d34964da3e9a859",
+        "android_client_info": {
+          "package_name": "com.example.uli_doation"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCphsAjCJzNL2ETFK1tER52u3SzrmnKRAY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

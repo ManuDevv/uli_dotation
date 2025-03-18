@@ -1,0 +1,3 @@
+Dans le tab synthése par équipe je voudrais faire une synthése par:
+Equipe
+la quantité des article choisi avec le detail par taille et le total en euros
