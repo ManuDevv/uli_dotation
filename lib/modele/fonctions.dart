@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uli_doation/screens/adminSceen.dart';
 
 import 'package:uli_doation/screens/login_screen.dart';
+import 'package:excel/excel.dart';
 
 FirebaseFirestore _firestore = FirebaseFirestore.instance;
 FirebaseAuth _auth = FirebaseAuth.instance;
@@ -52,7 +53,7 @@ updateChaussettesInfo(String userId, String taille, int quantite) async {
     await _firestore.collection('user').doc(userId).update(
         {'chaussettes taille': taille, 'chaussettes quantite': quantite});
     print('Updated successfully');
-    print("l'identifiant de la paersonne est : $userId");
+    print("l'identifiant de la personne est : $userId");
   } catch (e) {
     print('Error updating: $e');
     print("l'identifiant de la paersonne est : $userId");

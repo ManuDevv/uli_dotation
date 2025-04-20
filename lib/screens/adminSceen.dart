@@ -1,5 +1,9 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:excel/excel.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class AdminScreen extends StatefulWidget {
   @override
@@ -47,13 +51,22 @@ class _AdminScreenState extends State<AdminScreen>
         ),
         title: Text('Administration', style: TextStyle(color: Colors.white)),
         bottom: TabBar(
+          labelColor: Colors.white,
           controller: _tabController,
           tabs: [
-            Tab(text: 'Synthèse Équipes'),
+            Tab(text: 'Synthèse Équipes',),
             Tab(text: 'Gestion Articles'),
             Tab(text: 'Synthèse Secteurs'),
           ],
         ),
+        actions: [
+          ElevatedButton(onPressed: ()=>exportDataToExcel(), child: Row(
+            children: [
+              Text('Excel'),
+              Icon(Icons.file_upload)
+            ],
+          ))
+        ],
       ),
       body: TabBarView(
         controller: _tabController,
@@ -729,4 +742,68 @@ class _AdminScreenState extends State<AdminScreen>
       print('Erreur lors du chargement du plafond: $e');
     }
   }
+
+  Future<void> exportDataToExcel() async {
+    try {
+      // Step 1: Retrieve data from Firestore
+      QuerySnapshot querySnapshot =
+          await _firestore.collection('user').get();
+
+        if(querySnapshot.docs.isNotEmpty){
+          print(querySnapshot.docs.length);
+        }else{
+          print('connection not done');
+        }
+
+      // Step 2: Create an Excel file
+      var fichierExcel = Excel.createExcel();
+      Sheet sheetObject = fichierExcel['Users'];
+
+      // Add the header
+      sheetObject.appendRow([
+        
+        TextCellValue('Nom'),
+        TextCellValue('prenom')]);
+
+      // Add the data
+      for (var doc in querySnapshot.docs) {
+        var data = doc.data() as Map<String, dynamic>;
+        sheetObject.appendRow([
+       TextCellValue( data['nom']),
+       TextCellValue( data['prenom'])
+        ]);
+      }
+
+      // Save the file or perform further actions as needed
+    } catch (e) {
+      print('Error exporting data to Excel: $e');
+    }
+  // Étape 3 : Vérifier et demander la permission de stockage
+     // if (await Permission.storage.request().isGranted) {
+      Directory directory = await getApplicationDocumentsDirectory();
+      String filePath = '${directory.path}/Ce PC/M1038/Espace de stockage interne partagé/Download'; 
+ 
+      // Étape 4 : Sauvegarder le fichier localement
+      // File file = File(filePath)
+      //   ..createSync(recursive: true)
+      //   ..writeAsBytesSync(fichierExcel.encode()!);
+        var excel = Excel.createExcel();
+         // Assure-toi que c'est bien déclaré
+List<int>? bytes = excel.encode();
+if (bytes != null) {
+  File file = File(filePath)
+    ..createSync(recursive: true)
+    ..writeAsBytesSync(bytes);
+  print('📂 Fichier enregistré : $filePath');
+} else {
+  print('❌ Erreur : Impossible d’encoder le fichier Excel.');
 }
+
+      print('📂 Fichier enregistré : $filePath');
+   
+  } 
+
+    
+    }
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         

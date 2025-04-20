@@ -2,7 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uli_doation/coponent/dropdown.dart';
+import 'package:uli_doation/fichier%20test/test2.dart';
 import 'package:uli_doation/modele/fonctions.dart';
+import 'package:uli_doation/style/font.dart';
 
 FirebaseFirestore _firestore = FirebaseFirestore.instance;
 FirebaseAuth _auth = FirebaseAuth.instance;
@@ -14,15 +16,15 @@ class test3 extends StatefulWidget {
   State<test3> createState() => _test3State();
 }
 
-List<String> taille = ['S', 'M', 'L', 'XL', 'XXL'];
+List<String> taille = ['S', 'M', 'L', 'XL', '2XL', '3XL'];
 String selectedTailleCalecon = 'S';
-List<int> quantite = [1, 2, 3, 4, 5, 6];
+List<int> quantite = [0, 1, 2, 3, 4, 5, 6];
 int selectedQuantiteCalecon = 1;
 /////////////////////////////////////////
 int selectedQuantiteChaussette = 1;
 String selectedTailleChaussette = '39/40';
-List<int> quantiteChaussette = [1, 2, 3, 4, 5, 6];
-List<String> taileChaussette = ['39/40', '41/42', '43/44', '45/46', '47/48'];
+List<int> quantiteChaussette = [0, 1, 2, 3, 4, 5, 6];
+List<String> taileChaussette = ['39/42', '43/45', '46/48'];
 //////////////////////////////////////////////
 int selectedQuantiteMalliot = 1;
 String selectedTailleMalliot = 'S';
@@ -34,7 +36,7 @@ String selectedTailleTshirt = 'S';
 int selectedQuantiteTourDeCou = 1;
 /////////////
 int selectedSavonsDeMarseille = 12;
-List quantiteSavons = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+List quantiteSavons = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 /////////////
 int selectedQuantiteSavonnette = 12;
 /////////////////
@@ -49,16 +51,16 @@ TextEditingController nomController = TextEditingController();
 TextEditingController prenomController = TextEditingController();
 
 int selectedQuantiteSousGant = 1;
-List<int> quantiteSousGant = [1, 2, 3, 4, 5];
+List<int> quantiteSousGant = [0, 1, 2, 3, 4, 5];
 
 int selectedQuantiteServiette = 1;
-List<int> quantiteServiette = [1, 2, 3, 4, 5];
+List<int> quantiteServiette = [0, 1, 2, 3, 4, 5];
 
 int selectedQuantiteDrapBain = 1;
-List<int> quantiteDrapBain = [1, 2, 3, 4, 5];
+List<int> quantiteDrapBain = [0, 1, 2, 3, 4, 5];
 
 int selectedQuantiteGelDouche = 1;
-List<int> quantiteGelDouche = [1, 2, 3, 4, 5];
+List<int> quantiteGelDouche = [0, 1, 2, 3, 4, 5];
 
 class Article {
   final String nom;
@@ -73,12 +75,13 @@ class Article {
 class _test3State extends State<test3> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   Map<String, double> prixArticles = {};
-  Map<String, int> totalParEquipe = {};
+  double plafond = 160.0; // Valeur par défaut
 
   @override
   void initState() {
     super.initState();
     _loadPrixArticles();
+    _loadPlafond();
   }
 
   Future<void> _loadPrixArticles() async {
@@ -94,82 +97,99 @@ class _test3State extends State<test3> {
           }),
         );
       });
-      print('Prix articles chargés: $prixArticles'); // Debug print
+      print(
+          'Prix articles chargés: $prixArticles'); // Debug print pour vérifier
     } catch (e) {
       print('Erreur lors du chargement des prix: $e');
     }
   }
 
-  List<Article> getArticles(Map<String, dynamic> agent) {
-    // Debug print pour voir les prix disponibles
-    print('Prix disponibles lors de getArticles: $prixArticles');
-
-    return [
-      Article('Caleçons', prixArticles['Caleçons'] ?? 0,
-          totalParEquipe['Caleçons'] ?? 0),
-      Article('Chaussettes', prixArticles['Chaussettes'] ?? 0,
-          agent['chaussettes quantite'] ?? 0),
-      Article('Malliots', prixArticles['Malliots'] ?? 0,
-          agent['malliots quantite'] ?? 0),
-      Article(
-          'Tshirt', prixArticles['Tshirt'] ?? 0, agent['tshirt quantite'] ?? 0),
-      Article('Tour de cou', prixArticles['Tour de cou'] ?? 0,
-          agent['tourdecou2_quantite'] ?? 0),
-      Article('Savon', prixArticles['Savon'] ?? 0,
-          agent['savon_marseille_quantite'] ?? 0),
-      Article('Savonnette', prixArticles['Savonnette'] ?? 0,
-          agent['savonnette_marseille_quantite'] ?? 0),
-      Article(
-          'Bonnet', prixArticles['Bonnet'] ?? 0, agent['bonnet_quantite'] ?? 0),
-      Article('Sous gant', prixArticles['Sous gant'] ?? 0,
-          agent['sous_gant_quantite'] ?? 0),
-      Article('Serviette', prixArticles['Serviette'] ?? 0,
-          agent['serviette_quantite'] ?? 0),
-      Article('Drap bain', prixArticles['Drap bain'] ?? 0,
-          agent['drap_bain_quantite'] ?? 0),
-      Article('Gel douche', prixArticles['Gel douche'] ?? 0,
-          agent['gel_douche_quantite'] ?? 0),
-    ];
+  // Ajoutez cette fonction pour charger le plafond
+  Future<void> _loadPlafond() async {
+    try {
+      final doc =
+          await _firestore.collection('parametres').doc('plafond').get();
+      if (doc.exists) {
+        setState(() {
+          plafond = doc.data()?['montant'] ?? 160.0;
+          print('le plafond est de : $plafond');
+        });
+      }
+    } catch (e) {
+      print('Erreur lors du chargement du plafond: $e');
+    }
   }
 
+  // Modifiez la fonction qui calcule le total pour l'agent
   double calculerTotalAgent(Map<String, dynamic> agent) {
-    List<Article> articles = getArticles(agent);
-    double total = articles.fold(0, (sum, article) => sum + article.total);
+    double total = 0;
 
-   
-    
+    // Ajoutez ces prints pour déboguer
+    //  print('Prix des articles: $prixArticles');
+    // print('Agent data: $agent');
 
+    // Calculez le total pour chaque article
+    double totalCalecons =
+        (agent['calecons_quantite'] ?? 0) * (prixArticles['Caleçons'] ?? 0);
+    double totalChaussettes = (agent['chaussettes_quantite'] ?? 0) *
+        (prixArticles['Chaussettes'] ?? 0);
+    double totalMalliots =
+        (agent['maillots_quantite'] ?? 0) * (prixArticles['Malliots'] ?? 0);
+    double totalTshirt =
+        (agent['tshirt_quantite'] ?? 0) * (prixArticles['Tshirt'] ?? 0);
+    double totalTourDeCou = (agent['tourdecou2_quantite'] ?? 0) *
+        (prixArticles['Tour de cou'] ?? 0);
+    double totalSavon =
+        (agent['savon_marseille_quantite'] ?? 0) * (prixArticles['Savon'] ?? 0);
+    double totalSavonnette = (agent['savonnette_marseille_quantite'] ?? 0) *
+        (prixArticles['Savonnette'] ?? 0);
+    double totalBonnet =
+        (agent['bonnet_quantite'] ?? 0) * (prixArticles['Bonnet'] ?? 0);
+    double totalSousGant =
+        (agent['sous_gant_quantite'] ?? 0) * (prixArticles['Sous gant'] ?? 0);
+    double totalServiettes =
+        (agent['serviette_quantite'] ?? 0) * (prixArticles['Serviette'] ?? 0);
+    double totalDrapBain =
+        (agent['drap_bain_quantite'] ?? 0) * (prixArticles['Drap bain'] ?? 0);
+    double totalGelDouche =
+        (agent['gel_douche_quantite'] ?? 0) * (prixArticles['Gel douche'] ?? 0);
+
+    total += totalCalecons;
+    total += totalChaussettes;
+    total += totalMalliots;
+    total += totalTshirt;
+    total += totalTourDeCou;
+    total += totalSavon;
+    total += totalSavonnette;
+    total += totalBonnet;
+    total += totalSousGant;
+    total += totalServiettes;
+    total += totalDrapBain;
+    total += totalGelDouche;
+
+    print('Total final: ${agent['prenom']} à dépensé  $total');
     return total;
   }
 
+  // Ajoutez cette fonction pour vérifier si l'agent dépasse le plafond
+  bool depassePlafond(Map<String, dynamic> agent) {
+    return calculerTotalAgent(agent) > plafond;
+  }
+
   // Ajoutez cette fonction pour vérifier si on peut commander plus d'un article
-
-  peutCommanderPlus(
-      Map<String, dynamic> agent, String article, double prixUnitaire) {
-    double plafond = 160;
-
+  bool peutCommanderPlus(Map<String, dynamic> agent, String nomArticle) {
+    double prixArticle = prixArticles[nomArticle] ?? 0;
     double totalActuel = calculerTotalAgent(agent);
 
-    return (totalActuel + prixUnitaire) <= plafond;
+    return (totalActuel + prixArticle) <= plafond;
   }
 
-  // Modifiez la fonction testCouleur
-  Color testCouleur(Map<String, dynamic> agent) {
-    double plafond = 160;
-    double totalEuros = calculerTotalAgent(agent);
-
-    if (totalEuros >= plafond) {
-      return Colors.red; // Return red if over the limit
-    }
-    return Colors.transparent; // Return transparent otherwise
-  }
-
-  // Ajoutez cette fonction pour obtenir la couleur du texte de quantité
+  // Ajoutez cette fonction pour obtenir le style du texte de quantité
   TextStyle getQuantityTextStyle(
-      Map<String, dynamic> agent, String article, double prixUnitaire) {
-    Color couleur = testCouleur(agent); // Await the result
-    if (couleur == Colors.transparent &&
-        peutCommanderPlus(agent, article, prixUnitaire)) {
+      Map<String, dynamic> agent, String nomArticle) {
+    if (depassePlafond(agent)) {
+      return TextStyle(color: Colors.red, fontWeight: FontWeight.bold);
+    } else if (peutCommanderPlus(agent, nomArticle)) {
       return TextStyle(color: Colors.green, fontWeight: FontWeight.bold);
     }
     return TextStyle(color: Colors.black);
@@ -222,10 +242,11 @@ class _test3State extends State<test3> {
                       ],
                       rows: listAgent
                               ?.map((agent) => DataRow(
-                                      color: MaterialStateProperty.resolveWith(
-                                          (states) {
-                                        return Colors
-                                            .transparent; // Default color
+                                      color: MaterialStateProperty.resolveWith<
+                                          Color>((Set<MaterialState> states) {
+                                        return depassePlafond(agent)
+                                            ? Colors.red.withOpacity(0.3)
+                                            : Colors.transparent;
                                       }),
                                       cells: [
                                         // Icône de modification
@@ -245,6 +266,9 @@ class _test3State extends State<test3> {
                                                         children: [
                                                           Text(
                                                               'Nom: ${agent['nom']}'),
+                                                          SizedBox(
+                                                            height: 10,
+                                                          ),
                                                           Text(
                                                               'Prénom: ${agent['prenom']}'),
                                                           Row(
@@ -298,6 +322,9 @@ class _test3State extends State<test3> {
                                                                 },
                                                                 icon: Icon(Icons
                                                                     .delete)),
+                                                          ),
+                                                          SizedBox(
+                                                            height: 10,
                                                           ),
                                                           Row(
                                                             mainAxisAlignment:
@@ -472,1132 +499,1386 @@ class _test3State extends State<test3> {
                             Text('Qté', style: TextStyle(fontSize: 10)),
                           ],
                         )),
-                        DataColumn(label: Text('Savon de\nMarseille')),
+                        DataColumn(
+                            label: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text('Savon de\nMarseille'),
+                          ],
+                        )),
                         DataColumn(label: Text('Savonnette\nMarseille')),
                         DataColumn(label: Text('Bonnet\nanti-froid')),
-                        DataColumn(label: Text('Sous gant\Qté')),
+                        DataColumn(label: Text('Sous gant\nQté')),
                         DataColumn(label: Text('Serviettes\nQté')),
                         DataColumn(label: Text('Drap de bain\nQté')),
                         DataColumn(label: Text('Gel douche\nQté')),
                       ],
                       rows: listAgent
-                              ?.map((agent) => DataRow(
-                                      color: MaterialStateProperty.all(
-                                          Colors.transparent),
-                                      cells: [
-                                        // Caleçons
-                                        DataCell(
-                                          Center(
-                                            child: Text(
-                                              (agent['calecons quantite'] ??
-                                                      '0')
-                                                  .toString(),
-                                              style: getQuantityTextStyle(
-                                                  agent,
-                                                  'Caleçons',
-                                                  prixArticles['Caleçons'] ??
-                                                      0),
-                                            ),
-                                          ),
-                                        ),
-                                        // Chaussettes
-                                        DataCell(Center(
-                                          child: GestureDetector(
-                                            onTap: () => showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: Text(
-                                                        'Modification Chausettes'),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Row(
-                                                          children: [
-                                                            Text(agent['nom']),
-                                                            SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            Text(agent[
-                                                                'prenom']),
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          children: [
-                                                            Text('Quantité: '),
-                                                            SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedQuantiteChaussette,
-                                                                items:
-                                                                    quantiteChaussette,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedQuantiteChaussette =
-                                                                        value ??
-                                                                            0;
-                                                                  });
-                                                                })
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          children: [
-                                                            Text('Taille: '),
-                                                            SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedTailleChaussette,
-                                                                items:
-                                                                    taileChaussette,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedTailleChaussette =
-                                                                        value ??
-                                                                            '39/40';
-                                                                  });
-                                                                })
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceEvenly,
-                                                          children: [
-                                                            ElevatedButton(
-                                                                onPressed: () {
-                                                                  updateChaussettesInfo(
-                                                                      agent[
-                                                                          'uid'],
-                                                                      selectedTailleChaussette,
-                                                                      selectedQuantiteChaussette);
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                },
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        WidgetStatePropertyAll(Colors
-                                                                            .green)),
-                                                                child: Text(
-                                                                    'Enregistrer')),
-                                                            ElevatedButton(
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                        context),
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        WidgetStatePropertyAll(Colors
-                                                                            .red)),
-                                                                child: Text(
-                                                                    'Annuler'))
-                                                          ],
-                                                        )
-                                                      ],
-                                                    ),
-                                                  );
-                                                }),
-                                            child: Container(
-                                              padding: EdgeInsets.all(5),
-                                              decoration: BoxDecoration(
-                                                  color: (agent['chaussettes quantite'] ??
-                                                                  0) *
-                                                              7.57 >=
-                                                          160
-                                                      ? Colors
-                                                          .red // Colorie la cellule si Chaussettes dépasse
-                                                      : Colors.transparent,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10)),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                      (agent['chaussettes quantite'] ??
-                                                              '0')
-                                                          .toString(),
+                              ?.map(
+                                  (agent) => DataRow(
+                                          color: MaterialStateProperty.all(
+                                              Colors.transparent),
+                                          cells: [
+                                            // Caleçons
+                                            DataCell(
+                                              Center(
+                                                child: GestureDetector(
+                                                  onTap: () => showDialog(
+                                                      context: context,
+                                                      builder: (context) {
+                                                        // Important: Initialiser les valeurs locales avec les valeurs actuelles de l'agent
+                                                        int localQuantite =
+                                                            agent['calecons_quantite'] ??
+                                                                1;
+                                                        String localTaille =
+                                                            agent['calecons_taille'] ??
+                                                                'S';
+
+                                                        return StatefulBuilder(
+                                                          // Utiliser StatefulBuilder pour permettre les mises à jour d'état dans le Dialog
+                                                          builder: (context,
+                                                              setState) {
+                                                            return AlertDialog(
+                                                              title: Text(
+                                                                  'Modification Caleçon'),
+                                                              content: Column(
+                                                                mainAxisSize:
+                                                                    MainAxisSize
+                                                                        .min,
+                                                                children: [
+                                                                  Row(
+                                                                    children: [
+                                                                      Text(agent[
+                                                                          'nom']),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            5,
+                                                                      ),
+                                                                      Text(agent[
+                                                                          'prenom'])
+                                                                    ],
+                                                                  ),
+                                                                  Row(
+                                                                    children: [
+                                                                      Text(
+                                                                          'Quantité: '),
+                                                                      ReusableDropdown(
+                                                                        value:
+                                                                            localQuantite,
+                                                                        items:
+                                                                            quantite,
+                                                                        onChanged:
+                                                                            (value) {
+                                                                          setState(
+                                                                              () {
+                                                                            // Utiliser setState du StatefulBuilder
+                                                                            localQuantite =
+                                                                                value as int;
+                                                                          });
+                                                                        },
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  Row(
+                                                                    children: [
+                                                                      Text(
+                                                                          'Taille: '),
+                                                                      ReusableDropdown(
+                                                                        value:
+                                                                            localTaille,
+                                                                        items:
+                                                                            taille,
+                                                                        onChanged:
+                                                                            (value) {
+                                                                          setState(
+                                                                              () {
+                                                                            // Utiliser setState du StatefulBuilder
+                                                                            localTaille =
+                                                                                value as String;
+                                                                          });
+                                                                        },
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  Row(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .spaceEvenly,
+                                                                    children: [
+                                                                      ElevatedButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          // Mettre à jour Firestore avec les nouvelles valeurs
+                                                                          _firestore
+                                                                              .collection('user')
+                                                                              .doc(agent['uid'])
+                                                                              .update({
+                                                                            'calecons_quantite':
+                                                                                localQuantite,
+                                                                            'calecons_taille':
+                                                                                localTaille,
+                                                                          });
+                                                                          Navigator.pop(
+                                                                              context);
+                                                                        },
+                                                                        child:
+                                                                            Text(
+                                                                          'Enregistrer',
+                                                                          style:
+                                                                              fontButton,
+                                                                        ),
+                                                                        style: ButtonStyle(
+                                                                            backgroundColor:
+                                                                                WidgetStatePropertyAll(Colors.green)),
+                                                                      ),
+                                                                      ElevatedButton(
+                                                                        onPressed:
+                                                                            () =>
+                                                                                Navigator.pop(context),
+                                                                        child:
+                                                                            Text(
+                                                                          'Annuler',
+                                                                          style:
+                                                                              fontButton,
+                                                                        ),
+                                                                        style: ButtonStyle(
+                                                                            backgroundColor:
+                                                                                WidgetStatePropertyAll(Colors.red)),
+                                                                      )
+                                                                    ],
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            );
+                                                          },
+                                                        );
+                                                      }),
+                                                  child: Text(
+                                                      '${agent['calecons_quantite'] ?? '0'} / ${agent['calecons_taille'] ?? 'S'}',
                                                       style:
                                                           getQuantityTextStyle(
                                                               agent,
-                                                              'Chaussettes',
-                                                              7.57)),
-                                                  SizedBox(width: 20),
-                                                  Text(agent[
-                                                          'chaussettes taille'] ??
-                                                      '39/40'),
-                                                ],
+                                                              'Caleçons')),
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        )),
-                                        // Maillots
-                                        DataCell(Center(
-                                          child: GestureDetector(
-                                            onTap: () => showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: Text(
-                                                        'Modification Malliots'),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Row(
-                                                          children: [
-                                                            Text(agent['nom']),
-                                                            SizedBox(
-                                                              width: 10,
+                                            // Chaussettes
+                                            DataCell(
+                                              Center(
+                                                child: GestureDetector(
+                                                  onTap: () => showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      // Variables locales pour les chaussettes
+                                                      int localQuantite = agent[
+                                                              'chaussettes_quantite'] ??
+                                                          1;
+                                                      String localTaille = agent[
+                                                              'chaussettes_taille'] ??
+                                                          '39/42';
+
+                                                      return StatefulBuilder(
+                                                        builder: (context,
+                                                            setState) {
+                                                          return AlertDialog(
+                                                            title: Text(
+                                                                'Modification Chaussettes'),
+                                                            content: Column(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Text(
+                                                                    '${agent['nom']} ${agent['prenom']}'),
+                                                                Row(
+                                                                  children: [
+                                                                    Text(
+                                                                        'Quantité: '),
+                                                                    ReusableDropdown(
+                                                                      value:
+                                                                          localQuantite,
+                                                                      items:
+                                                                          quantiteChaussette,
+                                                                      onChanged:
+                                                                          (value) {
+                                                                        setState(
+                                                                            () {
+                                                                          localQuantite =
+                                                                              value as int;
+                                                                        });
+                                                                      },
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                Row(
+                                                                  children: [
+                                                                    Text(
+                                                                        'Taille: '),
+                                                                    ReusableDropdown(
+                                                                      value:
+                                                                          localTaille,
+                                                                      items:
+                                                                          taileChaussette,
+                                                                      onChanged:
+                                                                          (value) {
+                                                                        setState(
+                                                                            () {
+                                                                          localTaille =
+                                                                              value as String;
+                                                                        });
+                                                                      },
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceEvenly,
+                                                                  children: [
+                                                                    ElevatedButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        _firestore
+                                                                            .collection('user')
+                                                                            .doc(agent['uid'])
+                                                                            .update({
+                                                                          'chaussettes_quantite':
+                                                                              localQuantite,
+                                                                          'chaussettes_taille':
+                                                                              localTaille,
+                                                                        });
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                      child:
+                                                                          Text(
+                                                                        'Enregistrer',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor:
+                                                                              WidgetStatePropertyAll(Colors.green)),
+                                                                    ),
+                                                                    ElevatedButton(
+                                                                      onPressed:
+                                                                          () =>
+                                                                              Navigator.pop(context),
+                                                                      child:
+                                                                          Text(
+                                                                        'Annuler',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor:
+                                                                              WidgetStatePropertyAll(Colors.red)),
+                                                                    )
+                                                                  ],
+                                                                ),
+                                                              ],
                                                             ),
-                                                            Text(agent[
-                                                                'prenom']),
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          children: [
-                                                            Text('Quantité: '),
-                                                            SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedQuantiteMalliot,
-                                                                items: quantite,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedQuantiteMalliot =
-                                                                        value ??
-                                                                            0;
-                                                                  });
-                                                                })
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          children: [
-                                                            Text('Taille: '),
-                                                            SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedTailleMalliot,
-                                                                items: taille,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedTailleCalecon =
-                                                                        value ??
-                                                                            'S';
-                                                                  });
-                                                                })
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceEvenly,
-                                                          children: [
-                                                            ElevatedButton(
-                                                                onPressed: () {
-                                                                  updateMalliotsInfo(
-                                                                      agent[
-                                                                          'uid'],
-                                                                      selectedTailleMalliot,
-                                                                      selectedQuantiteMalliot);
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                },
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        WidgetStatePropertyAll(Colors
-                                                                            .green)),
-                                                                child: Text(
-                                                                    'Enregistrer')),
-                                                            ElevatedButton(
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                        context),
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        WidgetStatePropertyAll(Colors
-                                                                            .red)),
-                                                                child: Text(
-                                                                    'Annuler'))
-                                                          ],
-                                                        )
-                                                      ],
-                                                    ),
-                                                  );
-                                                }),
-                                            child: Container(
-                                              padding: EdgeInsets.all(5),
-                                              decoration: BoxDecoration(
-                                                  color: (agent['maillots quantite'] ??
-                                                                  0) *
-                                                              1.75 >=
-                                                          160
-                                                      ? Colors
-                                                          .red // Colorie la cellule si Malliots dépasse
-                                                      : Colors.transparent,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10)),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                      (agent['maillots quantite'] ??
-                                                              '0')
-                                                          .toString(),
+                                                          );
+                                                        },
+                                                      );
+                                                    },
+                                                  ),
+                                                  child: Text(
+                                                      '${agent['chaussettes_quantite'] ?? '0'}   ${agent['chaussettes_taille'] ?? '39/42'}',
                                                       style:
                                                           getQuantityTextStyle(
                                                               agent,
-                                                              'Maillots',
-                                                              1.75)),
-                                                  SizedBox(width: 20),
-                                                  Text(agent[
-                                                          'maillots taille'] ??
-                                                      '39/40'),
-                                                ],
+                                                              'Chaussettes')),
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        )),
-                                        //T-shirt
-                                        DataCell(Center(
-                                          child: GestureDetector(
-                                            onTap: () => showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: Text(
-                                                        'Modification T-shirt'),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Row(
-                                                          children: [
-                                                            Text(agent['nom']),
-                                                            SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            Text(agent[
-                                                                'prenom']),
-                                                          ],
+                                            // Maillots
+                                            DataCell(Center(
+                                              child: GestureDetector(
+                                                onTap: () => showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      int localQuantite = agent[
+                                                              'maillots_quantite'] ??
+                                                          1;
+                                                      String localTaille = agent[
+                                                              'maillots_taille'] ??
+                                                          'S';
+
+                                                      return StatefulBuilder(
+                                                        builder: (context,
+                                                                setState) =>
+                                                            AlertDialog(
+                                                          title: Text(
+                                                              'Modification Maillots'),
+                                                          content: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Row(
+                                                                children: [
+                                                                  Text(agent[
+                                                                      'nom']),
+                                                                  SizedBox(
+                                                                    width: 10,
+                                                                  ),
+                                                                  Text(agent[
+                                                                      'prenom']),
+                                                                ],
+                                                              ),
+                                                              Row(
+                                                                children: [
+                                                                  Text(
+                                                                      'Quantité: '),
+                                                                  SizedBox(
+                                                                    width: 10,
+                                                                  ),
+                                                                  ReusableDropdown(
+                                                                      value:
+                                                                          localQuantite,
+                                                                      items:
+                                                                          quantite,
+                                                                      onChanged:
+                                                                          (value) {
+                                                                        setState(
+                                                                            () {
+                                                                          localQuantite =
+                                                                              value as int;
+                                                                        });
+                                                                      })
+                                                                ],
+                                                              ),
+                                                              Row(
+                                                                children: [
+                                                                  Text(
+                                                                      'Taille: '),
+                                                                  SizedBox(
+                                                                    width: 10,
+                                                                  ),
+                                                                  ReusableDropdown(
+                                                                      value:
+                                                                          localTaille,
+                                                                      items:
+                                                                          taille,
+                                                                      onChanged:
+                                                                          (value) {
+                                                                        setState(
+                                                                            () {
+                                                                          localTaille =
+                                                                              value ?? 'S';
+                                                                        });
+                                                                      })
+                                                                ],
+                                                              ),
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceEvenly,
+                                                                children: [
+                                                                  ElevatedButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        _firestore
+                                                                            .collection('user')
+                                                                            .doc(agent['uid'])
+                                                                            .update({
+                                                                          'maillots_quantite':
+                                                                              localQuantite,
+                                                                          'maillots_taille':
+                                                                              localTaille,
+                                                                        });
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: WidgetStatePropertyAll(Colors
+                                                                              .green)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Enregistrer',
+                                                                        style:
+                                                                            fontButton,
+                                                                      )),
+                                                                  ElevatedButton(
+                                                                      onPressed: () =>
+                                                                          Navigator.pop(
+                                                                              context),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: WidgetStatePropertyAll(Colors
+                                                                              .red)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Annuler',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ))
+                                                                ],
+                                                              )
+                                                            ],
+                                                          ),
                                                         ),
-                                                        Row(
-                                                          children: [
-                                                            Text('Quantité: '),
-                                                            SizedBox(
-                                                              width: 10,
+                                                      );
+                                                    }),
+                                                child: Container(
+                                                  padding: EdgeInsets.all(5),
+                                                  decoration: BoxDecoration(
+                                                      color: (agent['maillots_quantite'] ??
+                                                                      0) *
+                                                                  1.75 >=
+                                                              160
+                                                          ? Colors
+                                                              .red // Colorie la cellule si Malliots dépasse
+                                                          : Colors.transparent,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10)),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        (agent['maillots_quantite'] ??
+                                                                '0')
+                                                            .toString(),style: getQuantityTextStyle(agent, 'malliot'),
+                                                      ),
+                                                      SizedBox(width: 20),
+                                                      Text(agent[
+                                                              'maillots_taille'] ??
+                                                          '39/40'),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            )),
+                                            //T-shirt
+                                            DataCell(Center(
+                                              child: GestureDetector(
+                                                onTap: () => showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      int localQuantite = agent[
+                                                              'tshirt_quantite'] ??
+                                                          1;
+                                                      String localTaille = agent[
+                                                              'tshirt_taille'] ??
+                                                          'S';
+
+                                                      return StatefulBuilder(
+                                                        builder: (context,
+                                                            setState) {
+                                                          return AlertDialog(
+                                                            title: Text(
+                                                                'Modification T-shirt'),
+                                                            content: Column(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Text(
+                                                                    '${agent['nom']} ${agent['prenom']}'),
+                                                                Row(
+                                                                  children: [
+                                                                    Text(
+                                                                        'Quantité: '),
+                                                                    ReusableDropdown(
+                                                                        value:
+                                                                            localQuantite,
+                                                                        items:
+                                                                            quantite,
+                                                                        onChanged:
+                                                                            (value) {
+                                                                          setState(
+                                                                              () {
+                                                                            localQuantite =
+                                                                                value as int;
+                                                                          });
+                                                                        }),
+                                                                  ],
+                                                                ),
+                                                                Row(
+                                                                  children: [
+                                                                    Text(
+                                                                        'Taille: '),
+                                                                    ReusableDropdown(
+                                                                        value:
+                                                                            localTaille,
+                                                                        items:
+                                                                            taille,
+                                                                        onChanged:
+                                                                            (value) {
+                                                                          setState(
+                                                                              () {
+                                                                            localTaille =
+                                                                                value as String;
+                                                                          });
+                                                                        }),
+                                                                  ],
+                                                                ),
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceEvenly,
+                                                                  children: [
+                                                                    ElevatedButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        _firestore
+                                                                            .collection('user')
+                                                                            .doc(agent['uid'])
+                                                                            .update({
+                                                                          'tshirt_quantite':
+                                                                              localQuantite,
+                                                                          'tshirt_taille':
+                                                                              localTaille,
+                                                                        });
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                      child:
+                                                                          Text(
+                                                                        'Enregistrer',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor:
+                                                                              WidgetStatePropertyAll(Colors.green)),
+                                                                    ),
+                                                                    ElevatedButton(
+                                                                      onPressed:
+                                                                          () =>
+                                                                              Navigator.pop(context),
+                                                                      child:
+                                                                          Text(
+                                                                        'Annuler',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor:
+                                                                              WidgetStatePropertyAll(Colors.red)),
+                                                                    )
+                                                                  ],
+                                                                ),
+                                                              ],
                                                             ),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedQuantiteTshirt,
-                                                                items: quantite,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedQuantiteTshirt =
-                                                                        value ??
-                                                                            0;
-                                                                  });
-                                                                })
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          children: [
-                                                            Text('Taille: '),
-                                                            SizedBox(
-                                                              width: 10,
+                                                          );
+                                                        },
+                                                      );
+                                                    }),
+                                                child: Container(
+                                                  padding: EdgeInsets.all(5),
+                                                  decoration: BoxDecoration(
+                                                      color: (agent['tshirt_quantite'] ??
+                                                                      0) *
+                                                                  1.75 >=
+                                                              160
+                                                          ? Colors
+                                                              .red // Colorie la cellule si Malliots dépasse
+                                                          : Colors.transparent,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10)),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        (agent['tshirt_quantite'] ??
+                                                                '0')
+                                                            .toString(),
+                                                      ),
+                                                      SizedBox(width: 10),
+                                                      Text(agent[
+                                                              'tshirt_taille'] ??
+                                                          '39/40'),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            )),
+                                            // Tour de cou
+                                            DataCell(
+                                              Center(
+                                                child: GestureDetector(
+                                                  onTap: () => showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      int localQuantite = agent[
+                                                              'tourdecou2_quantite'] ??
+                                                          1;
+
+                                                      return StatefulBuilder(
+                                                        builder: (context,
+                                                            setState) {
+                                                          return AlertDialog(
+                                                            title: Text(
+                                                                'Modification Tour de cou'),
+                                                            content: Column(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Text(
+                                                                    '${agent['nom']} ${agent['prenom']}'),
+                                                                Row(
+                                                                  children: [
+                                                                    Text(
+                                                                        'Quantité: '),
+                                                                    ReusableDropdown(
+                                                                      value:
+                                                                          localQuantite,
+                                                                      items:
+                                                                          quantite,
+                                                                      onChanged:
+                                                                          (value) {
+                                                                        setState(
+                                                                            () {
+                                                                          localQuantite =
+                                                                              value as int;
+                                                                        });
+                                                                      },
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceEvenly,
+                                                                  children: [
+                                                                    ElevatedButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        _firestore
+                                                                            .collection('user')
+                                                                            .doc(agent['uid'])
+                                                                            .update({
+                                                                          'tourdecou2_quantite':
+                                                                              localQuantite,
+                                                                        });
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                      child:
+                                                                          Text(
+                                                                        'Enregistrer',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor:
+                                                                              WidgetStatePropertyAll(Colors.green)),
+                                                                    ),
+                                                                    ElevatedButton(
+                                                                      onPressed:
+                                                                          () =>
+                                                                              Navigator.pop(context),
+                                                                      child:
+                                                                          Text(
+                                                                        'Annuler',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor:
+                                                                              WidgetStatePropertyAll(Colors.red)),
+                                                                    )
+                                                                  ],
+                                                                ),
+                                                              ],
                                                             ),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedTailleTshirt,
-                                                                items: taille,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedTailleTshirt =
-                                                                        value ??
-                                                                            'S';
-                                                                  });
-                                                                })
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceEvenly,
-                                                          children: [
-                                                            ElevatedButton(
-                                                                onPressed: () {
-                                                                  updateTshirtInfo(
-                                                                      agent[
-                                                                          'uid'],
-                                                                      selectedTailleTshirt,
-                                                                      selectedQuantiteTshirt);
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                },
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        WidgetStatePropertyAll(Colors
-                                                                            .green)),
-                                                                child: Text(
-                                                                    'Enregistrer')),
-                                                            ElevatedButton(
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                        context),
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        WidgetStatePropertyAll(Colors
-                                                                            .red)),
-                                                                child: Text(
-                                                                    'Annuler'))
-                                                          ],
-                                                        )
-                                                      ],
-                                                    ),
-                                                  );
-                                                }),
-                                            child: Container(
-                                              padding: EdgeInsets.all(5),
-                                              decoration: BoxDecoration(
-                                                  color: (agent['tshirt quantite'] ??
-                                                                  0) *
-                                                              1.75 >=
-                                                          160
-                                                      ? Colors
-                                                          .red // Colorie la cellule si Malliots dépasse
-                                                      : Colors.transparent,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10)),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                    (agent['Tshirt quantite'] ??
+                                                          );
+                                                        },
+                                                      );
+                                                    },
+                                                  ),
+                                                  child: Text(
+                                                    (agent['tourdecou2_quantite'] ??
                                                             '0')
                                                         .toString(),
                                                     style: getQuantityTextStyle(
-                                                        agent, 'Tshirt', 2.69),
+                                                        agent, 'Tour de cou'),
                                                   ),
-                                                  SizedBox(width: 10),
-                                                  Text(agent['Tshirt taille'] ??
-                                                      '39/40'),
-                                                ],
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        )),
-                                        // Tour de cou
-                                        DataCell(Center(
-                                          child: GestureDetector(
-                                            onTap: () => showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: Text(
-                                                        'Modification Tour de cou'),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Text(
-                                                            '${agent['nom']} ${agent['prenom']}'),
-                                                        Row(
-                                                          children: [
-                                                            Text('Quantité: '),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedQuantiteTourDeCou,
-                                                                items: quantite,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedQuantiteTourDeCou =
-                                                                        value
-                                                                            as int;
-                                                                  });
-                                                                }),
-                                                          ],
+                                            //////// Savon de Marseille
+                                            DataCell(Center(
+                                              child: GestureDetector(
+                                                onTap: () => showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      int localQuantite = agent[
+                                                              'savon_marseille_quantite'] ??
+                                                          12;
+
+                                                      return StatefulBuilder(
+                                                        builder: (context,
+                                                                setState) =>
+                                                            AlertDialog(
+                                                          title: Text(
+                                                              'Modification Savon de Marseille'),
+                                                          content: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              Text(
+                                                                  '${agent['nom']} ${agent['prenom']}'),
+                                                              Row(
+                                                                children: [
+                                                                  Text(
+                                                                      'Quantité: '),
+                                                                  ReusableDropdown(
+                                                                      value:
+                                                                          localQuantite,
+                                                                      items:
+                                                                          quantiteSavons,
+                                                                      onChanged:
+                                                                          (value) {
+                                                                        setState(
+                                                                            () {
+                                                                          localQuantite =
+                                                                              value as int;
+                                                                        });
+                                                                      }),
+                                                                ],
+                                                              ),
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceEvenly,
+                                                                children: [
+                                                                  ElevatedButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        _firestore
+                                                                            .collection('user')
+                                                                            .doc(agent['uid'])
+                                                                            .update({
+                                                                          'savon_marseille_quantite':
+                                                                              localQuantite,
+                                                                        });
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .green)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Enregistrer',
+                                                                        style:
+                                                                            fontButton,
+                                                                      )),
+                                                                  ElevatedButton(
+                                                                      onPressed: () =>
+                                                                          Navigator.pop(
+                                                                              context),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .red)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Annuler',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ))
+                                                                ],
+                                                              )
+                                                            ],
+                                                          ),
                                                         ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceEvenly,
-                                                          children: [
-                                                            ElevatedButton(
-                                                                onPressed: () {
-                                                                  _firestore
-                                                                      .collection(
-                                                                          'user')
-                                                                      .doc(agent[
-                                                                          'uid'])
-                                                                      .update({
-                                                                    'tourdecou2_quantite':
-                                                                        selectedQuantiteTourDeCou,
-                                                                  });
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                },
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .green)),
-                                                                child: Text(
-                                                                    'Enregistrer')),
-                                                            ElevatedButton(
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                        context),
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .red)),
-                                                                child: Text(
-                                                                    'Annuler'))
-                                                          ],
-                                                        )
-                                                      ],
-                                                    ),
-                                                  );
-                                                }),
-                                            child: Text(
-                                                (agent['tourdecou2_quantite'] ??
-                                                        '0')
-                                                    .toString(),
-                                                style: getQuantityTextStyle(
-                                                    agent,
-                                                    'Tour de cou',
-                                                    36.59)),
-                                          ),
-                                        )),
-                                        // Savon de Marseille
-                                        DataCell(Center(
-                                          child: GestureDetector(
-                                            onTap: () => showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: Text(
-                                                        'Modification Savon de Marseille'),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Text(
-                                                            '${agent['nom']} ${agent['prenom']}'),
-                                                        Row(
-                                                          children: [
-                                                            Text('Quantité: '),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedSavonsDeMarseille,
-                                                                items:
-                                                                    quantiteSavons,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedSavonsDeMarseille =
-                                                                        value
-                                                                            as int;
-                                                                  });
-                                                                }),
-                                                          ],
+                                                      );
+                                                    }),
+                                                child: Text(
+                                                  (agent['savon_marseille_quantite'] ??
+                                                          '0')
+                                                      .toString(),
+                                                ),
+                                              ),
+                                            )),
+                                            // Savonnette de Marseille
+                                            DataCell(Center(
+                                              child: GestureDetector(
+                                                onTap: () => showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      int localQuantite = agent[
+                                                              'savonnette_marseille_quantite'] ??
+                                                          12;
+                                                      return StatefulBuilder(
+                                                        builder: (context,
+                                                                setState) =>
+                                                            AlertDialog(
+                                                          title: Text(
+                                                              'Modification Savonnette de Marseille'),
+                                                          content: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              Text(
+                                                                  '${agent['nom']} ${agent['prenom']}'),
+                                                              Row(
+                                                                children: [
+                                                                  Text(
+                                                                      'Quantité: '),
+                                                                  ReusableDropdown(
+                                                                      value:
+                                                                          localQuantite,
+                                                                      items:
+                                                                          quantiteSavons,
+                                                                      onChanged:
+                                                                          (value) {
+                                                                        setState(
+                                                                            () {
+                                                                          localQuantite =
+                                                                              value as int;
+                                                                        });
+                                                                      }),
+                                                                ],
+                                                              ),
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceEvenly,
+                                                                children: [
+                                                                  ElevatedButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        _firestore
+                                                                            .collection('user')
+                                                                            .doc(agent['uid'])
+                                                                            .update({
+                                                                          'savonnette_marseille_quantite':
+                                                                              localQuantite,
+                                                                        });
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .green)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Enregistrer',
+                                                                        style:
+                                                                            fontButton,
+                                                                      )),
+                                                                  ElevatedButton(
+                                                                      onPressed: () =>
+                                                                          Navigator.pop(
+                                                                              context),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .red)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Annuler',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ))
+                                                                ],
+                                                              )
+                                                            ],
+                                                          ),
                                                         ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceEvenly,
-                                                          children: [
-                                                            ElevatedButton(
-                                                                onPressed: () {
-                                                                  _firestore
-                                                                      .collection(
-                                                                          'user')
-                                                                      .doc(agent[
-                                                                          'uid'])
-                                                                      .update({
-                                                                    'savon_marseille_quantite':
-                                                                        selectedSavonsDeMarseille,
-                                                                  });
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                },
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .green)),
-                                                                child: Text(
-                                                                    'Enregistrer')),
-                                                            ElevatedButton(
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                        context),
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .red)),
-                                                                child: Text(
-                                                                    'Annuler'))
-                                                          ],
-                                                        )
-                                                      ],
-                                                    ),
-                                                  );
-                                                }),
-                                            child: Text(
-                                                (agent['savon_marseille_quantite'] ??
-                                                        '0')
-                                                    .toString(),
-                                                style: getQuantityTextStyle(
-                                                    agent,
-                                                    'Savon de Marseille',
-                                                    1.47)),
-                                          ),
-                                        )),
-                                        // Savonnette de Marseille
-                                        DataCell(Center(
-                                          child: GestureDetector(
-                                            onTap: () => showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: Text(
-                                                        'Modification Savonnette de Marseille'),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Text(
-                                                            '${agent['nom']} ${agent['prenom']}'),
-                                                        Row(
-                                                          children: [
-                                                            Text('Quantité: '),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedQuantiteSavonnette,
-                                                                items:
-                                                                    quantiteSavons,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedQuantiteSavonnette =
-                                                                        value
-                                                                            as int;
-                                                                  });
-                                                                }),
-                                                          ],
+                                                      );
+                                                    }),
+                                                child: Text(
+                                                  (agent['savonnette_marseille_quantite'] ??
+                                                          '0')
+                                                      .toString(),
+                                                ),
+                                              ),
+                                            )),
+                                            // Bonnet anti-froid
+                                            DataCell(Center(
+                                              child: GestureDetector(
+                                                onTap: () => showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      int localQuantite = agent[
+                                                              'bonnet_quantite'] ??
+                                                          1;
+                                                      return StatefulBuilder(
+                                                        builder: (context,
+                                                                setState) =>
+                                                            AlertDialog(
+                                                          title: Text(
+                                                              'Modification Bonnet anti-froid'),
+                                                          content: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              Text(
+                                                                  '${agent['nom']} ${agent['prenom']}'),
+                                                              Row(
+                                                                children: [
+                                                                  Text(
+                                                                      'Quantité: '),
+                                                                  ReusableDropdown(
+                                                                      value:
+                                                                          localQuantite,
+                                                                      items:
+                                                                          quantiteBonnet,
+                                                                      onChanged:
+                                                                          (value) {
+                                                                        setState(
+                                                                            () {
+                                                                          localQuantite =
+                                                                              value as int;
+                                                                        });
+                                                                      }),
+                                                                ],
+                                                              ),
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceEvenly,
+                                                                children: [
+                                                                  ElevatedButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        _firestore
+                                                                            .collection('user')
+                                                                            .doc(agent['uid'])
+                                                                            .update({
+                                                                          'bonnet_quantite':
+                                                                              localQuantite,
+                                                                        });
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .green)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Enregistrer',
+                                                                        style:
+                                                                            fontButton,
+                                                                      )),
+                                                                  ElevatedButton(
+                                                                      onPressed: () =>
+                                                                          Navigator.pop(
+                                                                              context),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .red)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Annuler',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ))
+                                                                ],
+                                                              )
+                                                            ],
+                                                          ),
                                                         ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceEvenly,
-                                                          children: [
-                                                            ElevatedButton(
-                                                                onPressed: () {
-                                                                  _firestore
-                                                                      .collection(
-                                                                          'user')
-                                                                      .doc(agent[
-                                                                          'uid'])
-                                                                      .update({
-                                                                    'savonnette_marseille_quantite':
-                                                                        selectedQuantiteSavonnette,
-                                                                  });
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                },
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .green)),
-                                                                child: Text(
-                                                                    'Enregistrer')),
-                                                            ElevatedButton(
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                        context),
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .red)),
-                                                                child: Text(
-                                                                    'Annuler'))
-                                                          ],
-                                                        )
-                                                      ],
-                                                    ),
-                                                  );
-                                                }),
-                                            child: Text(
-                                                (agent['savonnette_marseille_quantite'] ??
-                                                        '0')
-                                                    .toString(),
-                                                style: getQuantityTextStyle(
-                                                    agent,
-                                                    'Savonnette de Marseille',
-                                                    0.36)),
-                                          ),
-                                        )),
-                                        // Bonnet anti-froid
-                                        DataCell(Center(
-                                          child: GestureDetector(
-                                            onTap: () => showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: Text(
-                                                        'Modification Bonnet anti-froid'),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Text(
-                                                            '${agent['nom']} ${agent['prenom']}'),
-                                                        Row(
-                                                          children: [
-                                                            Text('Quantité: '),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedBonnet,
-                                                                items:
-                                                                    quantiteBonnet,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedBonnet =
-                                                                        value
-                                                                            as int;
-                                                                  });
-                                                                }),
-                                                          ],
+                                                      );
+                                                    }),
+                                                child: Text(
+                                                  (agent['bonnet_quantite'] ??
+                                                          '0')
+                                                      .toString(),
+                                                ),
+                                              ),
+                                            )),
+                                            // Sous gant
+                                            DataCell(Center(
+                                              child: GestureDetector(
+                                                onTap: () => showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      int localQuantite = agent[
+                                                              'sous_gant_quantite'] ??
+                                                          1;
+                                                      return StatefulBuilder(
+                                                        builder: (context,
+                                                                setState) =>
+                                                            AlertDialog(
+                                                          title: Text(
+                                                              'Modification Sous gant'),
+                                                          content: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              Text(
+                                                                  '${agent['nom']} ${agent['prenom']}'),
+                                                              Row(
+                                                                children: [
+                                                                  Text(
+                                                                      'Quantité: '),
+                                                                  ReusableDropdown(
+                                                                      value:
+                                                                          localQuantite,
+                                                                      items:
+                                                                          quantiteSousGant,
+                                                                      onChanged:
+                                                                          (value) {
+                                                                        setState(
+                                                                            () {
+                                                                          localQuantite =
+                                                                              value as int;
+                                                                        });
+                                                                      }),
+                                                                ],
+                                                              ),
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceEvenly,
+                                                                children: [
+                                                                  ElevatedButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        _firestore
+                                                                            .collection('user')
+                                                                            .doc(agent['uid'])
+                                                                            .update({
+                                                                          'sous_gant_quantite':
+                                                                              localQuantite,
+                                                                        });
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .green)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Enregistrer',
+                                                                        style:
+                                                                            fontButton,
+                                                                      )),
+                                                                  ElevatedButton(
+                                                                      onPressed: () =>
+                                                                          Navigator.pop(
+                                                                              context),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .red)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Annuler',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ))
+                                                                ],
+                                                              )
+                                                            ],
+                                                          ),
                                                         ),
-                                                        Row(
-                                                          children: [
-                                                            Text('Quantité: '),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedBonnet,
-                                                                items:
-                                                                    quantiteBonnet,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedBonnet =
-                                                                        value
-                                                                            as int;
-                                                                  });
-                                                                }),
-                                                          ],
+                                                      );
+                                                    }),
+                                                child: Text(
+                                                  (agent['sous_gant_quantite'] ??
+                                                          '0')
+                                                      .toString(),
+                                                ),
+                                              ),
+                                            )),
+                                            // Serviettes
+                                            DataCell(Center(
+                                              child: GestureDetector(
+                                                onTap: () => showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      int localQuantite = agent[
+                                                              'serviette_quantite'] ??
+                                                          1;
+                                                      return StatefulBuilder(
+                                                        builder: (context,
+                                                                setState) =>
+                                                            AlertDialog(
+                                                          title: Text(
+                                                              'Modification Serviettes'),
+                                                          content: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              Text(
+                                                                  '${agent['nom']} ${agent['prenom']}'),
+                                                              Row(
+                                                                children: [
+                                                                  Text(
+                                                                      'Quantité: '),
+                                                                  ReusableDropdown(
+                                                                      value:
+                                                                          localQuantite,
+                                                                      items:
+                                                                          quantiteServiette,
+                                                                      onChanged:
+                                                                          (value) {
+                                                                        setState(
+                                                                            () {
+                                                                          localQuantite =
+                                                                              value as int;
+                                                                        });
+                                                                      }),
+                                                                ],
+                                                              ),
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceEvenly,
+                                                                children: [
+                                                                  ElevatedButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        _firestore
+                                                                            .collection('user')
+                                                                            .doc(agent['uid'])
+                                                                            .update({
+                                                                          'serviette_quantite':
+                                                                              localQuantite,
+                                                                        });
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .green)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Enregistrer',
+                                                                        style:
+                                                                            fontButton,
+                                                                      )),
+                                                                  ElevatedButton(
+                                                                      onPressed: () =>
+                                                                          Navigator.pop(
+                                                                              context),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .red)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Annuler',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ))
+                                                                ],
+                                                              )
+                                                            ],
+                                                          ),
                                                         ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceEvenly,
-                                                          children: [
-                                                            ElevatedButton(
-                                                                onPressed: () {
-                                                                  _firestore
-                                                                      .collection(
-                                                                          'user')
-                                                                      .doc(agent[
-                                                                          'uid'])
-                                                                      .update({
-                                                                    'bonnet_quantite':
-                                                                        selectedBonnet,
-                                                                  });
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                },
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .green)),
-                                                                child: Text(
-                                                                    'Enregistrer')),
-                                                            ElevatedButton(
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                        context),
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .red)),
-                                                                child: Text(
-                                                                    'Annuler'))
-                                                          ],
-                                                        )
-                                                      ],
-                                                    ),
-                                                  );
-                                                }),
-                                            child: Text(
-                                                (agent['bonnet_quantite'] ??
-                                                        '0')
-                                                    .toString(),
-                                                style: getQuantityTextStyle(
-                                                    agent, 'Bonnet', 6.51)),
-                                          ),
-                                        )),
-                                        // Sous gant
-                                        DataCell(Center(
-                                          child: GestureDetector(
-                                            onTap: () => showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: Text(
-                                                        'Modification Sous gant'),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Text(
-                                                            '${agent['nom']} ${agent['prenom']}'),
-                                                        Row(
-                                                          children: [
-                                                            Text('Quantité: '),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedQuantiteSousGant,
-                                                                items:
-                                                                    quantiteSousGant,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedQuantiteSousGant =
-                                                                        value
-                                                                            as int;
-                                                                  });
-                                                                }),
-                                                          ],
+                                                      );
+                                                    }),
+                                                child: Text(
+                                                  (agent['serviette_quantite'] ??
+                                                          '0')
+                                                      .toString(),
+                                                ),
+                                              ),
+                                            )),
+                                            // Drap de bain
+                                            DataCell(Center(
+                                              child: GestureDetector(
+                                                onTap: () => showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      int localQuantite = agent[
+                                                              'drap_bain_quantite'] ??
+                                                          1;
+                                                      return StatefulBuilder(
+                                                        builder: (context,
+                                                                setState) =>
+                                                            AlertDialog(
+                                                          title: Text(
+                                                              'Modification Drap de bain'),
+                                                          content: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              Text(
+                                                                  '${agent['nom']} ${agent['prenom']}'),
+                                                              Row(
+                                                                children: [
+                                                                  Text(
+                                                                      'Quantité: '),
+                                                                  ReusableDropdown(
+                                                                      value:
+                                                                          localQuantite,
+                                                                      items:
+                                                                          quantiteDrapBain,
+                                                                      onChanged:
+                                                                          (value) {
+                                                                        setState(
+                                                                            () {
+                                                                          localQuantite =
+                                                                              value as int;
+                                                                        });
+                                                                      }),
+                                                                ],
+                                                              ),
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceEvenly,
+                                                                children: [
+                                                                  ElevatedButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        _firestore
+                                                                            .collection('user')
+                                                                            .doc(agent['uid'])
+                                                                            .update({
+                                                                          'drap_bain_quantite':
+                                                                              localQuantite,
+                                                                        });
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .green)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Enregistrer',
+                                                                        style:
+                                                                            fontButton,
+                                                                      )),
+                                                                  ElevatedButton(
+                                                                      onPressed: () =>
+                                                                          Navigator.pop(
+                                                                              context),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .red)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Annuler',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ))
+                                                                ],
+                                                              )
+                                                            ],
+                                                          ),
                                                         ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceEvenly,
-                                                          children: [
-                                                            ElevatedButton(
-                                                                onPressed: () {
-                                                                  _firestore
-                                                                      .collection(
-                                                                          'user')
-                                                                      .doc(agent[
-                                                                          'uid'])
-                                                                      .update({
-                                                                    'sous_gant_quantite':
-                                                                        selectedQuantiteSousGant,
-                                                                  });
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                },
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .green)),
-                                                                child: Text(
-                                                                    'Enregistrer')),
-                                                            ElevatedButton(
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                        context),
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .red)),
-                                                                child: Text(
-                                                                    'Annuler'))
-                                                          ],
-                                                        )
-                                                      ],
-                                                    ),
-                                                  );
-                                                }),
-                                            child: Text(
-                                                (agent['sous_gant_quantite'] ??
-                                                        '0')
-                                                    .toString(),
-                                                style: getQuantityTextStyle(
-                                                    agent, 'Sous gant', 2.58)),
-                                          ),
-                                        )),
-                                        // Serviettes
-                                        DataCell(Center(
-                                          child: GestureDetector(
-                                            onTap: () => showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: Text(
-                                                        'Modification Serviettes'),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Text(
-                                                            '${agent['nom']} ${agent['prenom']}'),
-                                                        Row(
-                                                          children: [
-                                                            Text('Quantité: '),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedQuantiteServiette,
-                                                                items:
-                                                                    quantiteServiette,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedQuantiteServiette =
-                                                                        value
-                                                                            as int;
-                                                                  });
-                                                                }),
-                                                          ],
+                                                      );
+                                                    }),
+                                                child: Text(
+                                                  (agent['drap_bain_quantite'] ??
+                                                          '0')
+                                                      .toString(),
+                                                ),
+                                              ),
+                                            )),
+                                            // Gel douche
+                                            DataCell(Center(
+                                              child: GestureDetector(
+                                                onTap: () => showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      int localQuantite = agent[
+                                                              'gel_douche_quantite'] ??
+                                                          1;
+                                                      return StatefulBuilder(
+                                                        builder: (context,
+                                                                setState) =>
+                                                            AlertDialog(
+                                                          title: Text(
+                                                              'Modification Gel douche'),
+                                                          content: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              Text(
+                                                                  '${agent['nom']} ${agent['prenom']}'),
+                                                              Row(
+                                                                children: [
+                                                                  Text(
+                                                                      'Quantité: '),
+                                                                  ReusableDropdown(
+                                                                      value:
+                                                                          localQuantite,
+                                                                      items:
+                                                                          quantiteGelDouche,
+                                                                      onChanged:
+                                                                          (value) {
+                                                                        setState(
+                                                                            () {
+                                                                          localQuantite =
+                                                                              value as int;
+                                                                        });
+                                                                      }),
+                                                                ],
+                                                              ),
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceEvenly,
+                                                                children: [
+                                                                  ElevatedButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        _firestore
+                                                                            .collection('user')
+                                                                            .doc(agent['uid'])
+                                                                            .update({
+                                                                          'gel_douche_quantite':
+                                                                              localQuantite,
+                                                                        });
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .green)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Enregistrer',
+                                                                        style:
+                                                                            fontButton,
+                                                                      )),
+                                                                  ElevatedButton(
+                                                                      onPressed: () =>
+                                                                          Navigator.pop(
+                                                                              context),
+                                                                      style: ButtonStyle(
+                                                                          backgroundColor: MaterialStatePropertyAll(Colors
+                                                                              .red)),
+                                                                      child:
+                                                                          Text(
+                                                                        'Annuler',
+                                                                        style:
+                                                                            fontButton,
+                                                                      ))
+                                                                ],
+                                                              )
+                                                            ],
+                                                          ),
                                                         ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceEvenly,
-                                                          children: [
-                                                            ElevatedButton(
-                                                                onPressed: () {
-                                                                  _firestore
-                                                                      .collection(
-                                                                          'user')
-                                                                      .doc(agent[
-                                                                          'uid'])
-                                                                      .update({
-                                                                    'serviette_quantite':
-                                                                        selectedQuantiteServiette,
-                                                                  });
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                },
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .green)),
-                                                                child: Text(
-                                                                    'Enregistrer')),
-                                                            ElevatedButton(
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                        context),
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .red)),
-                                                                child: Text(
-                                                                    'Annuler'))
-                                                          ],
-                                                        )
-                                                      ],
-                                                    ),
-                                                  );
-                                                }),
-                                            child: Text(
-                                                (agent['serviette_quantite'] ??
-                                                        '0')
-                                                    .toString(),
-                                                style: getQuantityTextStyle(
-                                                    agent, 'Serviette', 4.29)),
-                                          ),
-                                        )),
-                                        // Drap de bain
-                                        DataCell(Center(
-                                          child: GestureDetector(
-                                            onTap: () => showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: Text(
-                                                        'Modification Drap de bain'),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Text(
-                                                            '${agent['nom']} ${agent['prenom']}'),
-                                                        Row(
-                                                          children: [
-                                                            Text('Quantité: '),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedQuantiteDrapBain,
-                                                                items:
-                                                                    quantiteDrapBain,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedQuantiteDrapBain =
-                                                                        value
-                                                                            as int;
-                                                                  });
-                                                                }),
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceEvenly,
-                                                          children: [
-                                                            ElevatedButton(
-                                                                onPressed: () {
-                                                                  _firestore
-                                                                      .collection(
-                                                                          'user')
-                                                                      .doc(agent[
-                                                                          'uid'])
-                                                                      .update({
-                                                                    'drap_bain_quantite':
-                                                                        selectedQuantiteDrapBain,
-                                                                  });
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                },
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .green)),
-                                                                child: Text(
-                                                                    'Enregistrer')),
-                                                            ElevatedButton(
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                        context),
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .red)),
-                                                                child: Text(
-                                                                    'Annuler'))
-                                                          ],
-                                                        )
-                                                      ],
-                                                    ),
-                                                  );
-                                                }),
-                                            child: Text(
-                                                (agent['drap_bain_quantite'] ??
-                                                        '0')
-                                                    .toString(),
-                                                style: getQuantityTextStyle(
-                                                    agent,
-                                                    'Drap de bain',
-                                                    7.84)),
-                                          ),
-                                        )),
-                                        // Gel douche
-                                        DataCell(Center(
-                                          child: GestureDetector(
-                                            onTap: () => showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: Text(
-                                                        'Modification Gel douche'),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Text(
-                                                            '${agent['nom']} ${agent['prenom']}'),
-                                                        Row(
-                                                          children: [
-                                                            Text('Quantité: '),
-                                                            ReusableDropdown(
-                                                                value:
-                                                                    selectedQuantiteGelDouche,
-                                                                items:
-                                                                    quantiteGelDouche,
-                                                                onChanged:
-                                                                    (value) {
-                                                                  setState(() {
-                                                                    selectedQuantiteGelDouche =
-                                                                        value
-                                                                            as int;
-                                                                  });
-                                                                }),
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceEvenly,
-                                                          children: [
-                                                            ElevatedButton(
-                                                                onPressed: () {
-                                                                  _firestore
-                                                                      .collection(
-                                                                          'user')
-                                                                      .doc(agent[
-                                                                          'uid'])
-                                                                      .update({
-                                                                    'gel_douche_quantite':
-                                                                        selectedQuantiteGelDouche,
-                                                                  });
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                },
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .green)),
-                                                                child: Text(
-                                                                    'Enregistrer')),
-                                                            ElevatedButton(
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                        context),
-                                                                style: ButtonStyle(
-                                                                    backgroundColor:
-                                                                        MaterialStatePropertyAll(Colors
-                                                                            .red)),
-                                                                child: Text(
-                                                                    'Annuler'))
-                                                          ],
-                                                        )
-                                                      ],
-                                                    ),
-                                                  );
-                                                }),
-                                            child: Text(
-                                                (agent['gel_douche_quantite'] ??
-                                                        '0')
-                                                    .toString(),
-                                                style: getQuantityTextStyle(
-                                                    agent, 'Gel douche', 4.20)),
-                                          ),
-                                        )),
-                                      ]))
+                                                      );
+                                                    }),
+                                                child: Text(
+                                                  (agent['gel_douche_quantite'] ??
+                                                          '0')
+                                                      .toString(),
+                                                ),
+                                              ),
+                                            )),
+                                          ]))
                               .toList() ??
                           [],
                     ),
